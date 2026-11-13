@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>灵山 · 祈愿墙</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%;background:#0a0c0b;color:#f0e6d2;
+    font-family:"Songti SC","Noto Serif CJK SC",Georgia,serif}
+  #bg{position:fixed;inset:0;background:url("assets/bg.jpg") center top/cover no-repeat;filter:saturate(1.02) brightness(1.02)}
+  #veil{position:fixed;inset:0;background:
+    radial-gradient(140% 60% at 50% 12%,rgba(4,8,8,.42) 0%,rgba(4,8,8,.10) 55%,rgba(4,8,8,0) 78%),
+    linear-gradient(180deg,rgba(3,6,6,.50) 0%,rgba(3,6,6,.06) 22%,rgba(3,6,6,.30) 55%,rgba(3,6,6,.86) 100%)}
+  .wrap{position:relative;max-width:720px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 26px) 18px 60px}
+  header{text-align:center;margin-bottom:148px}
+  h1{margin:0;font-size:26px;letter-spacing:.32em;font-weight:500;text-shadow:0 2px 18px rgba(0,0,0,.7)}
+  .sub{margin-top:10px;font-size:12px;letter-spacing:.22em;color:#d8cbaa;opacity:.95}
+  .card{background:rgba(10,15,14,.74);backdrop-filter:blur(10px);border:1px solid rgba(196,168,110,.22);
+    border-radius:16px;padding:16px;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+  textarea,input{width:100%;background:rgba(0,0,0,.34);border:1px solid rgba(196,168,110,.25);color:#f4ecd9;
+    border-radius:10px;padding:11px 12px;font-family:inherit;font-size:15px;outline:none}
+  textarea{resize:none;min-height:72px;line-height:1.62}
+  input{max-width:200px}
+  textarea:focus,input:focus{border-color:rgba(226,196,124,.65);box-shadow:0 0 0 3px rgba(226,196,124,.12)}
+  .row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .hint{font-size:12px;color:#c2b596;flex:1;min-width:120px}
+  button{background:linear-gradient(180deg,#e8c878,#c19a49);color:#241c0c;border:0;border-radius:999px;
+    padding:11px 26px;font-size:15px;font-weight:600;letter-spacing:.08em;cursor:pointer;
+    box-shadow:0 6px 20px rgba(200,160,80,.25)}
+  button:disabled{opacity:.55;cursor:default}
+  .msg{margin-top:8px;font-size:13px;min-height:0;color:#f0c98a}
+  .msg.err{color:#f09a8a}
+  .listhead{display:flex;justify-content:space-between;align-items:baseline;margin:26px 2px 10px;
+    font-size:13px;letter-spacing:.16em;color:#cbbf9f}
+  .wishes{display:flex;flex-direction:column;gap:10px}
+  .wish{background:rgba(12,18,17,.68);border:1px solid rgba(196,168,110,.16);border-left:2px solid rgba(226,196,124,.5);
+    border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.68;word-break:break-word;
+    animation:in .5s ease both}
+  .wish.new{box-shadow:0 0 0 1px rgba(226,196,124,.5),0 8px 30px rgba(226,196,124,.16)}
+  .wish .meta{display:flex;justify-content:space-between;font-size:11px;color:#b3a78c;margin-bottom:6px;letter-spacing:.1em}
+  @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .empty{text-align:center;color:#8b8270;font-size:13px;padding:26px 0}
+  footer{margin-top:34px;text-align:center;font-size:11.5px;color:#b6a98d;line-height:1.9}
+  footer a{color:#a2957a;text-decoration:none;border-bottom:1px dotted #6d6452}
+</style>
+</head>
+<body>
+<div id="bg"></div><div id="veil"></div>
+<div class="wrap">
+  <header>
+    <h1>灵山 · 祈愿墙</h1>
+    <div class="sub">一炷心香，愿有所归</div>
+  </header>
+
+  <div class="card">
+    <textarea id="text" maxlength="60" placeholder="在此写下你的祈愿……（最多 60 字）"></textarea>
+    <div class="row">
+      <input id="name" maxlength="12" placeholder="署名（可留空）">
+      <div class="hint" id="hint">匿名也可，愿皆可闻</div>
+      <button id="send">供 灯 祈 愿</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="listhead"><span>众 愿</span><span id="count"></span></div>
+  <div class="wishes" id="wishes"><div class="empty">尚无人留愿，愿你做第一个</div></div>
+
+  <footer>
+    文化虚拟空间 · 非宗教场所 · 非官方寺务平台<br>
+    <a href="/temple/">回禅寺</a> · <a href="/temple/ocean.html">听海</a> · 愿以此功德，普及于一切
+  </footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const textEl = $('text'), nameEl = $('name'), sendBtn = $('send'), msgEl = $('msg');
+
+function fmt(ts){
+  const d = new Date(ts), now = Date.now(), diff = (now - ts)/60000;
+  if (diff < 1) return '刚刚';
+  if (diff < 60) return Math.floor(diff) + ' 分钟前';
+  if (diff < 1440) return Math.floor(diff/60) + ' 小时前';
+  return (d.getMonth()+1) + '月' + d.getDate() + '日';
+}
+
+function node(w, isNew){
+  const d = document.createElement('div');
+  d.className = 'wish' + (isNew ? ' new' : '');
+  const m = document.createElement('div'); m.className = 'meta';
+  const n = document.createElement('span'); n.textContent = w.name || '匿名';
+  const t = document.createElement('span'); t.textContent = fmt(w.ts);
+  m.append(n, t);
+  const b = document.createElement('div'); b.textContent = w.text;   // 只用 textContent，杜绝注入
+  d.append(m, b);
+  return d;
+}
+
+async function load(){
+  try{
+    const r = await fetch('api/wishes?limit=60', {cache:'no-store'});
+    const j = await r.json();
+    const box = $('wishes'); box.innerHTML = '';
+    if (!j.items.length){ box.innerHTML = '<div class="empty">尚无人留愿，愿你做第一个</div>'; }
+    else j.items.forEach(w => box.append(node(w, false)));
+    $('count').textContent = j.total ? (j.total + ' 愿') : '';
+  }catch(e){ $('count').textContent = ''; }
+}
+
+async function send(){
+  const text = textEl.value.trim();
+  if (!text){ msgEl.textContent = '请先写下祈愿'; msgEl.className = 'msg err'; return; }
+  sendBtn.disabled = true; msgEl.className = 'msg'; msgEl.textContent = '正在供灯……';
+  try{
+    const r = await fetch('api/wishes', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ text, name: nameEl.value.trim() })
+    });
+    const j = await r.json();
+    if (!r.ok){ throw new Error(j.error || '提交失败'); }
+    textEl.value = ''; msgEl.textContent = '愿已上达，念念不忘，必有回响';
+    const box = $('wishes');
+    const emptyEl = box.querySelector('.empty'); if (emptyEl) emptyEl.remove();
+    box.prepend(node(j.item, true));
+    const c = parseInt(($('count').textContent||'0').replace(/\D/g,''),10) || 0;
+    $('count').textContent = (c+1) + ' 愿';
+  }catch(e){
+    msgEl.textContent = e.message || '提交失败，请稍后再试'; msgEl.className = 'msg err';
+  }finally{ sendBtn.disabled = false; }
+}
+
+sendBtn.addEventListener('click', send);
+textEl.addEventListener('keydown', e => { if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') send(); });
+load();
+</script>
+</body>
+</html>
