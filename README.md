@@ -36,6 +36,13 @@ wrangler deploy
 - 部署前必须完成账号邮箱验证，否则报 `10034 / You need to verify your email address`。
 - 首次 deploy 若要注册 `*.workers.dev` 子域，非交互模式下 wrangler 会答 "no"；用 API 注册：
   `PUT /accounts/<account_id>/workers/subdomain` body `{"subdomain":"<name>"}`。
+- URL 形如 `<worker名>.<账号子域>.workers.dev`，两段都可改，但方式不同：
+  - 改 **worker 名**：改 `wrangler.toml` 的 `name` 后 `wrangler deploy`（等于新建+删旧），
+    D1/Secrets 按名字绑定、数据不受影响，但要记得把旧 worker 删掉。
+  - 改 **账号子域**：`PUT .../workers/subdomain` 只会「创建」，已有子域时报 `10036`；
+    正确顺序是先 `DELETE .../workers/subdomain` 再 `PUT` 新名（本仓库实测可用）。
+- 新子域签发证书需要时间，期间 HTTPS 会 `SSL handshake failure`，HTTP 已可用；
+  别据此判定 Worker 挂了，先用 `http://` 验证 Worker 本身在服务。
 - 改 CSS 后务必确认浏览器实际解析出的规则数（`document.styleSheets[0].cssRules.length`）。
   一个漏掉的 `%)` 会让浏览器从那条起**静默丢弃所有样式规则**，且不报错。
 

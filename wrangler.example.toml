@@ -1,6 +1,6 @@
 # Cloudflare Workers + D1 + Static Assets —— 心愿墙（复制为 wrangler.toml 后填写）
 # 用法： cp wrangler.example.toml wrangler.toml  然后替换下面三个占位符
-name = "online-pray"
+name = "prayforhealth"
 main = "src/worker.js"
 compatibility_date = "2026-11-01"
 
