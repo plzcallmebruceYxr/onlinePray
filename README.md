@@ -41,6 +41,11 @@ wrangler deploy
     D1/Secrets 按名字绑定、数据不受影响，但要记得把旧 worker 删掉。
   - 改 **账号子域**：`PUT .../workers/subdomain` 只会「创建」，已有子域时报 `10036`；
     正确顺序是先 `DELETE .../workers/subdomain` 再 `PUT` 新名（本仓库实测可用）。
+- **换名顺序必须先部署新名、验证通过，再删旧 worker**。曾按「部署→删旧」执行时部署其实失败
+  （wrangler `fetch failed`：上传资产走 `*.workers.dev`/Cloudflare CDN 通道，直连不通），
+  旧 worker 已删导致短暂空档。补救：`HTTPS_PROXY` 指向可用出口 + `NO_PROXY=api.cloudflare.com`
+  （API 元数据直连可达、资产上传走代理）后 `wrangler deploy` 一次成功。
+  部署是否成功要看有没有 `Uploaded <name>` / `Deployed <name> triggers` 两行，别只看退出前的尾部输出。
 - 新子域签发证书需要时间，期间 HTTPS 会 `SSL handshake failure`，HTTP 已可用；
   别据此判定 Worker 挂了，先用 `http://` 验证 Worker 本身在服务。
 - 改 CSS 后务必确认浏览器实际解析出的规则数（`document.styleSheets[0].cssRules.length`）。
