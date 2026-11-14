@@ -2,3 +2,7 @@ data/
 *.log
 node_modules/
 .env
+wrangler.toml
+.wrangler/
+.tmp/
+.cfg/

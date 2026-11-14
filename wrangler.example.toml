@@ -1,0 +1,27 @@
+# Cloudflare Workers + D1 + Static Assets —— 心愿墙（复制为 wrangler.toml 后填写）
+# 用法： cp wrangler.example.toml wrangler.toml  然后替换下面三个占位符
+name = "online-pray"
+main = "src/worker.js"
+compatibility_date = "2026-11-01"
+
+# 占位符 1：Cloudflare 账号 ID（`wrangler whoami` 可见）；单账号可整行删掉，wrangler 会自动识别
+account_id = "<YOUR_ACCOUNT_ID>"
+
+# 静态资源：public/ 下的 index.html 与 assets/bg.jpg 由 Assets 直接发，
+# 只有 /api/* 与 /healthz 走 Worker（run_worker_first）。
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/healthz"]
+
+# IP 哈希盐：**不要写进仓库**，用密钥形式存：
+#   wrangler secret put IP_SALT
+# （下面这行只是占位，部署前删掉或留空）
+[vars]
+IP_SALT = "<DO_NOT_COMMIT — use: wrangler secret put IP_SALT>"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "online_pray"
+# 占位符 2：`wrangler d1 create online_pray` 输出的 database_id
+database_id = "<YOUR_D1_DATABASE_ID>"
